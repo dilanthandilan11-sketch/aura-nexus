@@ -1,0 +1,248 @@
+/* Capabilities text column, over the 3D void.
+ * Fonts: the site's local Orbitron (display) + Raleway (body).
+ * Light comes from the particles; the text stays restrained.
+ */
+
+.root {
+  --text: rgba(236, 244, 250, 0.96);
+  --text-dim: rgba(236, 244, 250, 0.72);
+  --text-muted: rgba(236, 244, 250, 0.42);
+  --accent: #3fb8ff;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  color: var(--text);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.6s var(--ease), visibility 0s linear 0.6s;
+}
+
+.root[data-visible="true"] {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.6s var(--ease), visibility 0s;
+}
+
+/* ── Left column: 45% on desktop ─────────────────── */
+.column {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 45%;
+  display: flex;
+  align-items: center;
+  padding: 0 clamp(24px, 3vw, 48px) 0 clamp(88px, 9vw, 140px);
+}
+
+/* All steps share one grid cell (sized by the tallest), centred in the
+   column; only the active one is in view */
+.stack {
+  display: grid;
+  width: 100%;
+}
+
+.item {
+  grid-area: 1 / 1;
+  align-self: center;
+  opacity: 0;
+  filter: blur(6px);
+  transform: translateY(40px);
+  transition:
+    opacity 0.7s var(--ease),
+    transform 0.8s var(--ease),
+    filter 0.7s var(--ease);
+}
+
+.item[data-state="active"] {
+  opacity: 1;
+  filter: blur(0);
+  transform: translateY(0);
+  transition-delay: 0.12s; /* let the previous step clear first */
+}
+
+.item[data-state="past"] {
+  opacity: 0;
+  filter: blur(6px);
+  transform: translateY(-40px);
+}
+
+/* ── Intro ───────────────────────────────────────── */
+.eyebrow {
+  font-family: "Raleway", sans-serif;
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 1.25rem;
+}
+
+.heading {
+  font-family: "Orbitron", sans-serif;
+  font-size: clamp(1.7rem, 2.7vw, 2.6rem);
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  line-height: 1.2;
+  text-wrap: balance;
+  color: var(--text);
+  margin: 0 0 1.25rem;
+}
+
+.tags {
+  list-style: none;
+  margin: 1.75rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.6rem;
+}
+
+.tags li {
+  font-family: "Orbitron", sans-serif;
+  font-size: 0.74rem;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+/* ── Services ────────────────────────────────────── */
+.number {
+  font-family: "Orbitron", sans-serif;
+  font-size: 0.8rem;
+  font-weight: 400;
+  letter-spacing: 0.2em;
+  color: var(--accent);
+  margin: 0 0 0.6rem;
+}
+
+.verb {
+  font-family: "Orbitron", sans-serif;
+  font-size: clamp(3rem, 6.2vw, 6rem);
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  line-height: 1;
+  color: var(--text);
+  margin: 0 0 0.9rem;
+}
+
+.title {
+  font-family: "Raleway", sans-serif;
+  font-size: clamp(1rem, 1.3vw, 1.2rem);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text);
+  margin: 0 0 1rem;
+}
+
+.body {
+  font-family: "Raleway", sans-serif;
+  font-size: 1.05rem;
+  font-weight: 300;
+  line-height: 1.7;
+  color: var(--text-dim);
+  max-width: 44ch;
+  margin: 0;
+  text-wrap: pretty;
+}
+
+/* ── Progress indicator: far left, 01-05 ─────────── */
+.progress {
+  position: absolute;
+  left: clamp(20px, 3vw, 44px);
+  top: 50%;
+  translate: 0 -50%;
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 14px;
+  display: grid;
+  gap: 1.3rem;
+  border-left: 1px solid rgba(236, 244, 250, 0.14);
+  z-index: 1; /* above the text column's backdrop gradient on mobile */
+}
+
+.progressItem {
+  position: relative;
+  font-family: "Orbitron", sans-serif;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+  transition: color 0.5s var(--ease);
+}
+
+/* Bright tick on the line beside the active number */
+.progressItem::before {
+  content: "";
+  position: absolute;
+  left: -15px;
+  top: 50%;
+  width: 1px;
+  height: 1.6rem;
+  translate: 0 -50%;
+  background: var(--accent);
+  transform: scaleY(0);
+  transition: transform 0.5s var(--ease);
+}
+
+.progressItem[data-state="done"] {
+  color: rgba(236, 244, 250, 0.62);
+}
+
+.progressItem[data-state="active"] {
+  color: var(--accent);
+}
+
+.progressItem[data-state="active"]::before {
+  transform: scaleY(1);
+}
+
+/* ── Stacked layout below 900px: particles in the top 45vh band ─ */
+@media (max-width: 899px) {
+  .column {
+    top: 45%;
+    width: 100%;
+    align-items: flex-start;
+    padding: 1.5rem 20px 2rem 64px;
+    background: linear-gradient(180deg, transparent, rgba(2, 4, 10, 0.55) 18%);
+  }
+
+  .item {
+    align-self: start;
+  }
+
+  .progress {
+    top: calc(45% + 1.6rem);
+    translate: 0 0;
+    left: 16px;
+    gap: 0.9rem;
+  }
+
+  .verb {
+    font-size: clamp(2.4rem, 12vw, 3.4rem);
+  }
+
+  .heading {
+    font-size: 1.45rem;
+  }
+
+  .body {
+    font-size: 0.95rem;
+  }
+}
+
+/* Reduced motion: plain crossfade, no slide or blur */
+@media (prefers-reduced-motion: reduce) {
+  .item,
+  .item[data-state="active"],
+  .item[data-state="past"] {
+    transform: none;
+    filter: none;
+    transition: opacity 0.4s linear;
+    transition-delay: 0s;
+  }
+}

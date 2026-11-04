@@ -1,0 +1,179 @@
+/* Site navigation with decoder hover effect.
+ * Font: Orbitron from /public/fonts (same HUD voice as the boot screen).
+ * z-index: overlay 290 < nav 300.
+ */
+
+.nav {
+  --accent: #00d4ff;
+  --text: rgba(244, 247, 250, 0.96);
+  --text-muted: rgba(244, 247, 250, 0.62);
+
+  position: fixed;
+  top: max(28px, env(safe-area-inset-top));
+  right: max(clamp(16px, 5vw, 72px), env(safe-area-inset-right));
+  z-index: 300;
+}
+
+.list {
+  display: flex;
+  align-items: center;
+  gap: clamp(1.75rem, 3vw, 3rem);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── Scramble text ───────────────────────────────── */
+.scramble {
+  display: inline-flex;
+  white-space: nowrap;
+}
+
+/* Every character keeps its real glyph in the flow, so its width never
+   changes. While scrambling, the real glyph goes transparent and a random
+   glyph is painted centred on top of it. */
+.char {
+  position: relative;
+  display: inline-block;
+}
+
+.char[data-scrambling] {
+  color: transparent;
+}
+
+.char[data-scrambling]::after {
+  content: attr(data-glyph);
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--accent);
+  pointer-events: none;
+}
+
+/* ── Desktop links ───────────────────────────────── */
+.link,
+.menuBtn {
+  all: unset;
+  box-sizing: border-box;
+  position: relative;
+  display: inline-block;
+  padding: 8px 0;
+  font-family: "Orbitron", sans-serif;
+  font-size: 0.78rem;
+  font-weight: 400;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  color: #ffffff;   /* white nav links (was var(--text-muted)) */
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.3s ease;
+}
+
+/* Hairline that draws in from the left on hover */
+.link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0.18em; /* ignore trailing letter-spacing */
+  bottom: 2px;
+  height: 1px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.link:hover,
+.link:focus-visible,
+.menuBtn:hover,
+.menuBtn:focus-visible {
+  color: var(--text);
+}
+
+.link:hover::after,
+.link:focus-visible::after {
+  transform: scaleX(1);
+}
+
+.link:focus-visible,
+.menuBtn:focus-visible,
+.overlayLink:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 6px;
+  border-radius: 2px;
+}
+
+.menuBtn {
+  display: none;
+}
+
+/* ── Mobile overlay ──────────────────────────────── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 290;
+  display: flex;
+  align-items: center;
+  padding: 0 max(24px, env(safe-area-inset-left));
+  background: rgba(2, 4, 10, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  overscroll-behavior: contain;
+  touch-action: none;
+}
+
+.overlayList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1.25rem;
+}
+
+.overlayLink {
+  all: unset;
+  box-sizing: border-box;
+  display: inline-block;
+  padding: 6px 0;
+  font-family: "Orbitron", sans-serif;
+  font-size: clamp(1.8rem, 9vw, 2.6rem);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(244, 247, 250, 0.96);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.overlay .char[data-scrambling]::after {
+  color: #00d4ff;
+}
+
+@media (max-width: 767px) {
+  .nav {
+    top: max(18px, env(safe-area-inset-top));
+    right: max(16px, env(safe-area-inset-right));
+  }
+
+  .list {
+    display: none;
+  }
+
+  .menuBtn {
+    display: inline-block;
+    padding: 10px 4px;
+    color: var(--text);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .link,
+  .menuBtn,
+  .link::after {
+    transition: none;
+  }
+}

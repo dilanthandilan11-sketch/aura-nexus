@@ -1,0 +1,152 @@
+/* Root font variables */
+:root {
+  --font-heading: var(--font-heading), 'Orbitron', sans-serif;
+  --font-subheading: var(--font-body), 'Raleway', sans-serif;
+  --font-body: var(--font-body), 'Raleway', sans-serif;
+  --font-nav: var(--font-nav), 'Sora', sans-serif;
+  --font-mono: var(--font-mono), 'JetBrains Mono', monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: #020204;
+  font-family: var(--font-body);
+}
+
+/* Scrolling enabled after intro - hidden scrollbar for cinematic feel */
+html.scroll-enabled {
+  overflow-y: scroll !important;
+  scrollbar-width: none;
+}
+
+html.scroll-enabled::-webkit-scrollbar {
+  display: none;
+}
+
+html.scroll-enabled body {
+  overflow-y: visible !important;
+  height: auto;
+}
+
+.app {
+  width: 100%;
+  height: 100%;
+}
+
+canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Typography classes */
+h1, h2, h3, .heading {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+h4, h5, h6, .subheading {
+  font-family: var(--font-subheading);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+p, .body-text {
+  font-family: var(--font-body);
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+nav, .nav-text, .navigation {
+  font-family: var(--font-nav);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+}
+
+/* Panel styling */
+.panel {
+  width: min(720px, 92vw);
+  background: rgba(5, 8, 12, 0.75);
+  border: 1px solid rgba(0, 174, 239, 0.25);
+  border-radius: 18px;
+  padding: 22px 22px 18px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(10px);
+  color: white;
+  font-family: var(--font-body);
+}
+
+.panel__back {
+  background: transparent;
+  border: 1px solid rgba(0, 174, 239, 0.35);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-family: var(--font-nav);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  transition: border-color 0.3s ease;
+}
+
+.panel__back:hover {
+  border-color: rgba(0, 174, 239, 0.75);
+}
+
+.panel__title {
+  margin: 14px 0 10px;
+  font-size: 28px;
+  letter-spacing: 0.06em;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.panel__body {
+  opacity: 0.95;
+  line-height: 1.55;
+  font-family: var(--font-body);
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+/* Shimmer animation */
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Animated border running clockwise */
+@keyframes borderRun {
+  0% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: -600;
+  }
+}
+
+/* Preserve 3D for nav links */
+.nav-3d-link {
+  transform-style: preserve-3d;
+  perspective: 500px;
+}

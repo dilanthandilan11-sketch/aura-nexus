@@ -1,0 +1,498 @@
+/* ===============================
+   GLOBAL CONFIG
+================================ */
+:root {
+  --white: 255, 255, 255;
+  --cyan: 0, 212, 255;
+  --purple: 124, 58, 237;
+}
+
+/* Register --angle so it can be animated via @keyframes */
+@property --angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+/* ===============================
+   NAV POSITIONING
+================================ */
+.nav {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+
+  display: flex;
+  gap: 50px;
+  padding: 14px 50px;
+
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+
+  pointer-events: auto;
+  isolation: isolate;
+
+  /* Soft neon outer glow */
+  box-shadow:
+    0 0 15px rgba(var(--cyan), 0.08),
+    0 0 40px rgba(var(--purple), 0.04);
+  transition: box-shadow 0.4s ease;
+
+  /* Mouse tracking custom properties */
+  --mouse-x: 50%;
+  --mouse-y: 50%;
+  --mouse-velocity: 0;
+  --ripple-scale: 0;
+}
+
+/* Hover glow enhancement */
+.nav:hover {
+  box-shadow:
+    0 0 20px rgba(var(--cyan), 0.15),
+    0 0 60px rgba(var(--purple), 0.08),
+    0 0 80px rgba(var(--cyan), 0.04);
+}
+
+.navReveal {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 150;
+}
+
+/* ===============================
+   RIPPLE EFFECT
+================================ */
+.ripple {
+  position: absolute;
+  left: var(--mouse-x);
+  top: var(--mouse-y);
+  width: 200px;
+  height: 200px;
+  transform: translate(-50%, -50%) scale(var(--ripple-scale));
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: -1;
+  
+  background: radial-gradient(
+    circle,
+    rgba(var(--cyan), 0.3) 0%,
+    rgba(var(--cyan), 0.1) 30%,
+    transparent 70%
+  );
+  
+  filter: blur(20px);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.nav::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  padding: 1.5px;
+
+  background: conic-gradient(
+    from var(--angle),
+    rgba(var(--cyan), 0.8),
+    rgba(var(--purple), 0.6),
+    rgba(var(--cyan), 0.3),
+    rgba(var(--purple), 0.6),
+    rgba(var(--cyan), 0.8)
+  );
+
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+
+  z-index: -1;
+  opacity: 0.7;
+  transition: opacity 0.4s ease;
+  animation: spinGradient 4s linear infinite;
+}
+
+.nav:hover::before {
+  opacity: 1;
+}
+
+.nav:hover .ripple {
+  opacity: 1;
+  animation: ripplePulse 2s ease-out infinite;
+}
+
+@keyframes ripplePulse {
+  0% {
+    transform: translate(-50%, -50%) scale(0.5);
+    opacity: 0.6;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(2);
+    opacity: 0;
+  }
+}
+@keyframes spinGradient {
+  from {
+    --angle: 0deg;
+  }
+  to {
+    --angle: 360deg;
+  }
+}
+
+/* ===============================
+   LINKS
+================================ */
+.link {
+  position: relative;
+  text-decoration: none;
+  color: rgba(255, 255, 255, 0.92);
+
+  font-family: "Sora", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  font-weight: 200;
+  font-size: 14px;
+  letter-spacing: 0.05em;
+
+  opacity: 0.9;
+  transition: 
+    opacity 220ms ease, 
+    color 220ms ease,
+    transform 300ms cubic-bezier(0.16, 1, 0.3, 1);
+  
+  /* Individual link displacement on hover */
+  --link-distort-x: 0;
+  --link-distort-y: 0;
+  
+  transform: 
+    translate(
+      calc((var(--mouse-x) - 50%) * var(--link-distort-x)),
+      calc((var(--mouse-y) - 50%) * var(--link-distort-y))
+    );
+}
+
+.link:hover {
+  opacity: 1;
+  color: rgb(var(--white));
+  --link-distort-x: 3px;
+  --link-distort-y: 2px;
+  
+  /* Chromatic aberration effect */
+  text-shadow: 
+    calc((var(--mouse-x) - 50%) * 0.02) 0 0 rgba(255, 0, 80, 0.5),
+    calc((50% - var(--mouse-x)) * 0.02) 0 0 rgba(0, 212, 255, 0.5);
+}
+
+.link:focus-visible {
+  outline: 2px solid rgba(var(--white), 0.55);
+  outline-offset: 6px;
+  border-radius: 10px;
+}
+
+.active {
+  opacity: 1;
+}
+
+/* ===============================
+   3D TEXT WITH DISPLACEMENT
+================================ */
+.text3d {
+  display: inline-grid;
+  place-items: center;
+  transform-style: preserve-3d;
+  perspective: 900px;
+  position: relative;
+}
+
+.face {
+  position: relative;
+  transform: translateZ(10px);
+  color: currentColor;
+  transition: 
+    transform 260ms ease,
+    filter 300ms ease;
+  
+  /* Liquid distortion filter on hover */
+  filter: blur(0px);
+}
+
+.link:hover .face {
+  /* Subtle displacement blur */
+  filter: blur(0.3px);
+  transform: 
+    translateZ(15px)
+    translateX(calc((var(--mouse-x) - 50%) * 0.01))
+    translateY(calc((var(--mouse-y) - 50%) * 0.01));
+}
+
+/* ===============================
+   GLITCH/DISPLACEMENT LAYERS
+================================ */
+.face::before,
+.face::after {
+  content: attr(data-text);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+/* Red channel displacement */
+.face::before {
+  color: #ff0040;
+  transform: translate(
+    calc((var(--mouse-x) - 50%) * 0.03),
+    calc((var(--mouse-y) - 50%) * -0.02)
+  );
+  clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+  mix-blend-mode: screen;
+}
+
+/* Cyan channel displacement */
+.face::after {
+  color: #00d4ff;
+  transform: translate(
+    calc((var(--mouse-x) - 50%) * -0.03),
+    calc((var(--mouse-y) - 50%) * 0.02)
+  );
+  clip-path: polygon(0 55%, 100% 55%, 100% 100%, 0 100%);
+  mix-blend-mode: screen;
+}
+
+.link:hover .face::before,
+.link:hover .face::after {
+  opacity: 0.7;
+  animation: glitchDisplace 0.4s infinite;
+}
+
+@keyframes glitchDisplace {
+  0%, 100% {
+    clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+    transform: translate(
+      calc((var(--mouse-x) - 50%) * 0.04),
+      calc((var(--mouse-y) - 50%) * -0.03)
+    );
+  }
+  25% {
+    clip-path: polygon(0 15%, 100% 15%, 100% 60%, 0 60%);
+    transform: translate(
+      calc((var(--mouse-x) - 50%) * -0.02),
+      calc((var(--mouse-y) - 50%) * 0.04)
+    );
+  }
+  50% {
+    clip-path: polygon(0 40%, 100% 40%, 100% 85%, 0 85%);
+    transform: translate(
+      calc((var(--mouse-x) - 50%) * 0.03),
+      calc((var(--mouse-y) - 50%) * 0.02)
+    );
+  }
+  75% {
+    clip-path: polygon(0 65%, 100% 65%, 100% 100%, 0 100%);
+    transform: translate(
+      calc((var(--mouse-x) - 50%) * -0.04),
+      calc((var(--mouse-y) - 50%) * -0.02)
+    );
+  }
+}
+
+/* ===============================
+   UNDERLINE WITH DISPLACEMENT
+================================ */
+.underline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -6px;
+  height: 2px;
+  border-radius: 999px;
+  background: rgba(var(--white), 0.95);
+
+  opacity: 0;
+  transform: scaleX(0.25);
+  transform-origin: left;
+
+  transition: 
+    opacity 220ms ease, 
+    transform 260ms ease,
+    filter 300ms ease;
+  
+  /* Displacement wave on hover */
+  filter: none;
+}
+
+.link:hover .underline {
+  opacity: 1;
+  transform: scaleX(1);
+  
+  /* Wavy distortion */
+  background: linear-gradient(
+    90deg,
+    rgba(var(--cyan), 0.8),
+    rgba(var(--white), 1),
+    rgba(var(--purple), 0.8)
+  );
+  filter: blur(0.5px);
+  animation: waveShift 1s ease-in-out infinite;
+}
+
+.active .underline {
+  opacity: 0.75;
+  transform: scaleX(0.86);
+}
+
+@keyframes waveShift {
+  0%, 100% {
+    clip-path: polygon(
+      0% 50%,
+      10% 30%,
+      20% 50%,
+      30% 70%,
+      40% 50%,
+      50% 30%,
+      60% 50%,
+      70% 70%,
+      80% 50%,
+      90% 30%,
+      100% 50%,
+      100% 100%,
+      0% 100%
+    );
+  }
+  50% {
+    clip-path: polygon(
+      0% 50%,
+      10% 70%,
+      20% 50%,
+      30% 30%,
+      40% 50%,
+      50% 70%,
+      60% 50%,
+      70% 30%,
+      80% 50%,
+      90% 70%,
+      100% 50%,
+      100% 100%,
+      0% 100%
+    );
+  }
+}
+
+/* ===============================
+   ORBIT PARTICLES
+================================ */
+.orbitWrap {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 86px;
+  height: 56px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+
+  opacity: 0;
+  transition: opacity 160ms ease;
+}
+
+.link:hover .orbitWrap {
+  opacity: 1;
+}
+
+.orbitDot,
+.orbitDot2,
+.orbitDot3,
+.orbitDot4,
+.orbitDot5 {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  border-radius: 50%;
+  pointer-events: none;
+
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 1),
+    rgba(255, 255, 255, 0.6),
+    rgba(255, 255, 255, 0)
+  );
+  
+  /* Displacement effect on particles */
+  transition: transform 0.3s ease;
+}
+
+.link:hover .orbitDot {
+  transform: translate(
+    calc((var(--mouse-x) - 50%) * 0.1),
+    calc((var(--mouse-y) - 50%) * 0.1)
+  );
+}
+
+/* ===============================
+   ORBIT ANIMATIONS
+================================ */
+@keyframes orbitSpin {
+  0%   { transform: rotateX(55deg) rotateZ(15deg) rotate(0deg) translateX(30px); }
+  100% { transform: rotateX(55deg) rotateZ(15deg) rotate(360deg) translateX(30px); }
+}
+
+@keyframes orbitSpin2 {
+  0%   { transform: rotateX(55deg) rotateZ(15deg) rotate(0deg) translateX(24px); }
+  100% { transform: rotateX(55deg) rotateZ(15deg) rotate(-360deg) translateX(24px); }
+}
+
+@keyframes orbitSpin3 {
+  0%   { transform: rotateX(55deg) rotateZ(15deg) rotate(0deg) translateX(36px); }
+  100% { transform: rotateX(55deg) rotateZ(15deg) rotate(360deg) translateX(36px); }
+}
+
+@keyframes orbitSpin4 {
+  0%   { transform: rotateX(55deg) rotateZ(15deg) rotate(0deg) translateX(32px); }
+  100% { transform: rotateX(55deg) rotateZ(15deg) rotate(360deg) translateX(32px); }
+}
+
+@keyframes orbitSpin5 {
+  0%   { transform: rotateX(55deg) rotateZ(15deg) rotate(0deg) translateX(22px); }
+  100% { transform: rotateX(55deg) rotateZ(15deg) rotate(-360deg) translateX(22px); }
+}
+
+/* ===============================
+   ORBIT DOT SIZES
+================================ */
+.orbitDot  { width: 6.75px; height: 6.75px; opacity: 0.95; animation: orbitSpin 1.05s linear infinite; }
+.orbitDot2 { width: 4.5px;  height: 4.5px;  opacity: 0.7;  animation: orbitSpin2 0.9s linear infinite; }
+.orbitDot3 { width: 4.5px;  height: 4.5px;  opacity: 0.55; animation: orbitSpin3 1.4s linear infinite; }
+.orbitDot4 { width: 4.5px;  height: 4.5px;  opacity: 0.65; animation: orbitSpin4 1.25s linear infinite; }
+.orbitDot5 { width: 3.375px;height: 3.375px;opacity: 0.45; animation: orbitSpin5 0.8s linear infinite; }
+
+/* ===============================
+   TOUCH DEVICES
+================================ */
+@media (pointer: coarse) {
+  .orbitWrap,
+  .ripple {
+    display: none;
+  }
+  
+  .link:hover {
+    text-shadow: none;
+    transform: none;
+  }
+  
+  .face::before,
+  .face::after {
+    display: none;
+  }
+}

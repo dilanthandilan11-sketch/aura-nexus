@@ -1,0 +1,456 @@
+/* Capabilities section (scroll phase 4)
+ * The orbit is WebGL (ServicesOrbit3D); this file styles the DOM layer
+ * plus the orbit's <Html> labels.
+ * Fonts: only the local brand faces from /public/fonts (Orbitron, Raleway),
+ * matching the landing hero.
+ * Shape rule: buttons full pill, everything else unboxed.
+ */
+
+.root {
+  --accent: #00d4ff;
+  --text: rgba(244, 247, 250, 0.96);
+  --text-dim: rgba(244, 247, 250, 0.74);
+  --text-muted: rgba(244, 247, 250, 0.5);
+  --orbitron: "Orbitron", sans-serif;
+  --raleway: "Raleway", sans-serif;
+  --gutter: clamp(16px, 5vw, 72px);
+
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+  color: var(--text);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── Header ──────────────────────────────────────── */
+.header {
+  position: absolute;
+  top: max(clamp(28px, 7vh, 64px), env(safe-area-inset-top));
+  left: max(var(--gutter), env(safe-area-inset-left));
+  display: grid;
+  grid-template-columns: auto auto;
+  column-gap: 16px;
+  align-items: center;
+}
+
+/* Short cyan rule tying the header into the HUD language */
+.rule {
+  grid-row: 1;
+  width: 44px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent));
+}
+
+.header .lede {
+  grid-column: 2;
+}
+
+.title {
+  font-family: var(--orbitron);
+  font-size: clamp(1.1rem, 1.7vw, 1.5rem);
+  font-weight: 300;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1.2;
+  color: var(--text);
+  margin: 0 0 0.5rem;
+}
+
+.title strong {
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.lede {
+  font-family: var(--raleway);
+  font-size: 0.95rem;
+  font-weight: 200;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+  margin: 0;
+}
+
+/* ── 3D orbit labels (rendered by drei <Html>) ───── */
+.orbitLabel {
+  all: unset;
+  box-sizing: border-box;
+  display: block;
+  padding: 6px 12px;
+  font-family: "Orbitron", sans-serif;
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: rgba(244, 247, 250, 0.62);
+  text-shadow: 0 0 12px rgba(2, 4, 10, 0.9);
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.4s ease;
+}
+
+.orbitLabel:hover {
+  color: rgba(244, 247, 250, 0.96);
+}
+
+.orbitLabel[aria-pressed="true"] {
+  color: #00d4ff;
+  font-weight: 700;
+  text-shadow: 0 0 14px rgba(0, 212, 255, 0.55);
+}
+
+.orbitLabel:focus-visible {
+  outline: 2px solid #00d4ff;
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+/* ── Detail (bottom band) ────────────────────────── */
+.detail {
+  position: absolute;
+  left: max(var(--gutter), env(safe-area-inset-left));
+  right: max(var(--gutter), env(safe-area-inset-right));
+  bottom: max(clamp(32px, 8vh, 80px), env(safe-area-inset-bottom));
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 430px);
+  gap: clamp(2rem, 5vw, 5rem);
+  align-items: end;
+  pointer-events: auto;
+}
+
+.kicker {
+  font-family: var(--raleway);
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 0.9rem;
+}
+
+.headline {
+  font-family: var(--orbitron);
+  font-size: clamp(2rem, 4.4vw, 4rem);
+  font-weight: 300;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  line-height: 1.12;
+  color: var(--text);
+  margin: 0;
+  min-height: 2.3em;
+  display: flex;
+  align-items: flex-end;
+  text-wrap: balance;
+}
+
+.headlineInner {
+  display: block;
+  perspective: 1000px;
+}
+
+.word {
+  display: inline-block;
+  white-space: nowrap;
+  margin-right: 0.28em;
+}
+
+.word:last-child {
+  margin-right: 0;
+}
+
+.letter {
+  display: inline-block;
+  transform-style: preserve-3d;
+}
+
+/* Accent word on its own line: "Intelligent by" / "DESIGN" */
+.accentWord {
+  display: block;
+  font-weight: 900;
+  color: var(--accent);
+  text-transform: uppercase;
+  text-shadow: 0 0 14px rgba(0, 212, 255, 0.55), 0 0 36px rgba(0, 212, 255, 0.22);
+}
+
+.body {
+  font-family: var(--raleway);
+  font-size: 1.05rem;
+  font-weight: 300;
+  line-height: 1.7;
+  color: var(--text-dim);
+  margin: 0 0 1.25rem;
+  text-wrap: pretty;
+}
+
+.includes {
+  list-style: none;
+  margin: 0 0 1.75rem;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.4rem;
+}
+
+.includes li {
+  font-family: var(--raleway);
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+.includes li + li::before {
+  content: "/" / "";
+  margin-right: 1.4rem;
+  margin-left: -0.1rem;
+  color: var(--accent);
+  font-weight: 300;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.cta {
+  all: unset;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.9rem 1.7rem;
+  border-radius: 9999px;
+  background: var(--accent);
+  color: #03060c;
+  font-family: var(--orbitron);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.cta:hover {
+  background: #5ce3ff;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(0, 212, 255, 0.25);
+}
+
+.cta:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.cta:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 3px;
+}
+
+.ctaArrow {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cta:hover .ctaArrow {
+  transform: translateX(3px);
+}
+
+.pauseBtn {
+  all: unset;
+  box-sizing: border-box;
+  padding: 0.85rem 1.3rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: var(--text-dim);
+  font-family: var(--orbitron);
+  font-size: 0.72rem;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 0.3s ease, color 0.3s ease, background-color 0.3s ease;
+}
+
+.pauseBtn:hover {
+  border-color: rgba(0, 212, 255, 0.6);
+  color: var(--text);
+  background: rgba(0, 212, 255, 0.06);
+}
+
+.pauseBtn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* ── Service navigator ───────────────────────────── */
+.segments {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 1.5rem;
+}
+
+.segment {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 0;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.segment:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.segLabel {
+  display: none;
+}
+
+.segTrack {
+  position: relative;
+  display: block;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.16);
+  overflow: hidden;
+  transition: background-color 0.3s ease;
+}
+
+.segment:hover .segTrack {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.segment[aria-pressed="true"] .segTrack {
+  background: rgba(0, 212, 255, 0.22);
+}
+
+.segFill {
+  position: absolute;
+  inset: 0;
+  background: var(--accent);
+  transform-origin: left center;
+}
+
+/* ── Mobile ──────────────────────────────────────── */
+@media (max-width: 767px) {
+  .header {
+    top: max(24px, env(safe-area-inset-top));
+    left: max(16px, env(safe-area-inset-left));
+  }
+
+  .lede {
+    font-size: 0.85rem;
+  }
+
+  /* Orbit stays as the visual; the navigator chips take over labels */
+  .orbitLabel {
+    display: none;
+  }
+
+  .rule {
+    width: 28px;
+  }
+
+  .segments {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px 10px;
+    margin-top: 1rem;
+  }
+
+  .segment {
+    padding: 6px 0;
+    gap: 6px;
+  }
+
+  .segLabel {
+    display: block;
+    font-family: var(--orbitron);
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .segment[aria-pressed="true"] .segLabel {
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .detail {
+    left: max(16px, env(safe-area-inset-left));
+    right: max(16px, env(safe-area-inset-right));
+    bottom: max(24px, env(safe-area-inset-bottom));
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .kicker {
+    font-size: 0.72rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .headline {
+    font-size: 1.65rem;
+  }
+
+  .body {
+    font-size: 0.92rem;
+    line-height: 1.6;
+    margin-bottom: 0.9rem;
+  }
+
+  .includes {
+    margin-bottom: 1.1rem;
+  }
+
+  .includes li {
+    font-size: 0.68rem;
+  }
+
+  .cta {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+/* Short desktop viewports */
+@media (min-width: 768px) and (max-height: 720px) {
+  .headline { font-size: clamp(1.8rem, 3.4vw, 3rem); }
+  .body { margin-bottom: 0.9rem; }
+  .includes { margin-bottom: 1.1rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orbitLabel,
+  .cta,
+  .ctaArrow,
+  .pauseBtn,
+  .segTrack { transition: none; }
+}
