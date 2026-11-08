@@ -405,15 +405,17 @@ function DimensionalPortal({ progress, holeVisibility }) {
 // ============================================
 // MAIN LANDING INTRO COMPONENT
 // ============================================
-export default function LandingIntro({ children, onComplete }) {
-    const [progress, setProgress] = useState(0);
-    const [introDone, setIntroDone] = useState(false);
+export default function LandingIntro({ children, onComplete, skip = false }) {
+    // skip: a return visit from another page; the scene shows without the boot screen
+    const [progress, setProgress] = useState(skip ? 1 : 0);
+    const [introDone, setIntroDone] = useState(skip);
 
     const rafRef = useRef(null);
     const startRef = useRef(null);
     const doneRef = useRef(false);
 
     useEffect(() => {
+        if (skip) { doneRef.current = true; return; }
         startRef.current = performance.now();
 
         const tick = () => {
@@ -434,7 +436,7 @@ export default function LandingIntro({ children, onComplete }) {
 
         rafRef.current = requestAnimationFrame(tick);
         return () => rafRef.current && cancelAnimationFrame(rafRef.current);
-    }, [onComplete]);
+    }, [onComplete, skip]);
 
     // Calculate portal progress (0 to 1 during portal phase)
     const portalP = getProgress(progress, TIMELINE.PORTAL);
