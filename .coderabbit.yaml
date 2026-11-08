@@ -1,0 +1,65 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+# CodeRabbit review settings for the Aura Infotech website.
+# CodeRabbit reads this file from the repository's default branch.
+
+language: "en-CA"
+
+reviews:
+  # "chill" flags real problems without nitpicking style
+  profile: "chill"
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: true
+
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - "main"
+
+  # Large binaries, generated files and local backups: nothing to review
+  path_filters:
+    - "!public/hdri/**"
+    - "!**/*.exr"
+    - "!**/*.hdr"
+    - "!**/*.glb"
+    - "!package-lock.json"
+    - "!_savepoints/**"
+    - "!.next/**"
+    - "!out/**"
+    - "!**/*.backup.jsx.txt"
+
+  path_instructions:
+    - path: "src/components/**/*.jsx"
+      instructions: |
+        Next.js 16 App Router with React 19 and React Three Fiber.
+        - Inside useFrame callbacks, flag any per-frame allocation (new THREE.Vector3,
+          new Color, object or array literals); values should be reused from refs.
+        - Flag setState calls inside useFrame; per-frame values belong in refs or
+          the mutable store in src/components/world/worldStore.js.
+        - Check that effects clean up listeners, timers and animations, and that
+          WebGL resources (geometries, materials, textures) are disposed on unmount.
+        - Components that touch window, document or WebGL must be client-only.
+    - path: "src/components/**/*Shaders.js"
+      instructions: |
+        GLSL in template strings. Check uniform names match what the JS side sets,
+        precision qualifiers, and divisions that can hit zero.
+    - path: "src/app/**/*.js"
+      instructions: |
+        The site is a static export (output: "export"). Dynamic routes need
+        generateStaticParams with dynamicParams = false; no server-only APIs
+        (cookies, headers, route handlers) can be used.
+    - path: "src/**/*.css"
+      instructions: |
+        CSS modules. Check text contrast against the dark background, visible
+        keyboard focus, and that motion has a prefers-reduced-motion path.
+    - path: "src/content/**/*.js"
+      instructions: |
+        Site copy. Text in [square brackets] is a deliberate placeholder waiting
+        for real content; don't flag it. Do flag spelling mistakes and
+        inconsistent service names or slugs.
+
+chat:
+  auto_reply: true
