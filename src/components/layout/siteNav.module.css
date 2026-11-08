@@ -5,7 +5,7 @@
 
 .nav {
   --accent: #00d4ff;
-  --text: rgba(244, 247, 250, 0.96);
+  --text: #ffffff;   /* white (was rgba(244, 247, 250, 0.96)) */
   --text-muted: rgba(244, 247, 250, 0.62);
 
   position: fixed;
@@ -94,8 +94,36 @@
 }
 
 .link:hover::after,
-.link:focus-visible::after {
+.link:focus-visible::after,
+.link[aria-current="page"]::after {
   transform: scaleX(1);
+}
+
+/* Logo, top-left on every page except Home (Home shows its own) */
+.brand {
+  position: fixed;
+  top: max(10px, env(safe-area-inset-top));
+  left: max(clamp(12px, 3vw, 28px), env(safe-area-inset-left));
+  z-index: 300;
+  display: block;
+  line-height: 0;
+  border-radius: 4px;
+}
+
+.brand img {
+  height: 90px;
+  width: auto;
+}
+
+.brand:focus-visible {
+  outline: 2px solid var(--accent, #1ce3da);
+  outline-offset: 2px;
+}
+
+@media (max-width: 767px) {
+  .brand img {
+    height: 64px;
+  }
 }
 
 .link:focus-visible,
@@ -143,7 +171,7 @@
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: rgba(244, 247, 250, 0.96);
+  color: #ffffff;   /* white mobile menu links */
   cursor: pointer;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;

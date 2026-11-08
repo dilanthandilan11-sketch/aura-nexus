@@ -13,6 +13,7 @@ import { useFrame } from "@react-three/fiber";
 import { Text } from "@react-three/drei";
 import * as THREE from "three";
 import { holdState } from "@/components/scene/molten/holdState";
+import { introDelay } from "@/lib/introState";
 
 const SERVICES = [
     "Software Development",
@@ -122,6 +123,8 @@ export default function ServiceMarquee({ scrollRef, freeze = false }) {
     const entry    = useRef([null, null, null]);   // slide-in plan per row, null = not planned
     const entered  = useRef([false, false, false]);
     const mountedAt = useRef(0);
+    // On a return visit to Home the chain starts as soon as the headline does
+    const introDelayMs = useRef(introDelay(INTRO_DELAY));
     useEffect(() => { mountedAt.current = performance.now(); }, []);
 
     // Each row starts at a different service so the rows don't line up
@@ -182,7 +185,7 @@ export default function ServiceMarquee({ scrollRef, freeze = false }) {
 
         // half the visible width at the rows' depth
         const halfW = halfH * (state.size.width / state.size.height) + EDGE_MARGIN;
-        const introT = (performance.now() - mountedAt.current - INTRO_DELAY) / 1000;
+        const introT = (performance.now() - mountedAt.current - introDelayMs.current) / 1000;
         const nPer = GLOW_LAYERS.length + 1;
 
         rowRefs.current.forEach((row, r) => {

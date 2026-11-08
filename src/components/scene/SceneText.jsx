@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useMemo, memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { introDelay } from "@/lib/introState";
 
 // ============================================
 // CONFIGURATION
@@ -324,7 +325,7 @@ export default function SceneText({ scrollProgress = 0 }) {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsVisible(true), INTRO_DELAY);
+    const timer = setTimeout(() => setIsVisible(true), introDelay(INTRO_DELAY));
     return () => clearTimeout(timer);
   }, []);
 

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import SiteNav from "@/components/layout/SiteNav";
 import { MAX_PROGRESS, PHASE_STOPS } from "@/lib/scrollPhases";
+import { homeIsReturn, markSeen } from "@/lib/introState";
 
 // ── Client-only 3D imports ──────────────────────────────────────────────────
 const LandingIntro = dynamic(
@@ -35,8 +36,11 @@ const AuraScrollPage = dynamic(
 const VH_PER_PROGRESS = (450 * 0.82 - 100) / 0.82;
 const TOTAL_HEIGHT_VH = 100 + VH_PER_PROGRESS * MAX_PROGRESS;
 const UNFREEZE_DELAY  = 6000;
+const RETURN_UNFREEZE = 400;   // coming back from another page: no intro to wait for
 
 export default function Home() {
+  // Coming back from another page of the site skips the loading intro
+  const [returning] = useState(homeIsReturn);
   const [freeze, setFreeze]               = useState(true);
   const [scrollProgress, setScrollProgress] = useState(0);
 
@@ -45,12 +49,15 @@ export default function Home() {
   const rafRef          = useRef(null);
 
   useEffect(() => {
+    markSeen();
+    // Start at the landing, not wherever the previous page was scrolled to
+    if (returning) window.scrollTo({ top: 0, behavior: "instant" });
     const t = setTimeout(() => {
       setFreeze(false);
       document.documentElement.classList.add("scroll-enabled");
-    }, UNFREEZE_DELAY);
+    }, returning ? RETURN_UNFREEZE : UNFREEZE_DELAY);
     return () => clearTimeout(t);
-  }, []);
+  }, [returning]);
 
   // Smooth scroll progress + phase-snap when scrolling stops
   useEffect(() => {
@@ -151,7 +158,7 @@ export default function Home() {
   }, []);
 
   return (
-    <main id="top">
+    <main id="top" className={returning ? "home-return" : undefined}>
       <SiteNav />
 
       {/*
@@ -166,7 +173,7 @@ export default function Home() {
 
       {/* LandingIntro is position:fixed — pass totalHeight={0} so
           AuraScrollPage skips its own internal spacer */}
-      <LandingIntro>
+      <LandingIntro skip={returning}>
         <AuraScrollPage
           SceneComponent={Scene}
           scrollProgress={scrollProgress}
