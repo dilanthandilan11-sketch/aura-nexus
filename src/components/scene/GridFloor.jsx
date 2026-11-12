@@ -15,6 +15,13 @@
 // vignette toward the bottom corners, and a soft horizon that melts into
 // space (no hard line).
 //
+// Electric runs: every so often a bolt of light runs along the grid lines,
+// zigzagging from a random intersection to another (bright head with a
+// flicker, a fading tail, a small flash where it starts and where it ends).
+// Up to MAX_BOLTS at once; each one waits a random gap before the next.
+// The paths live in the floor's own grid coordinates, so they drift with the
+// tiles, follow the warp and turn with the scene.
+//
 // The quad sits a fixed distance in front of the camera, so the logo (closer)
 // renders in front of it and the aurora (farther) is hidden below the horizon.
 // Landing only: fades out as soon as the user scrolls.
@@ -33,6 +40,13 @@ const CELL_WIDTH       = 2.2;   // ground units between longitudinal lines
 const CELL_DEPTH       = 3.0;   // ground units between horizontal lines (tiles: rectangles)
 const LINE_STRENGTH    = 0.55;  // line brightness (kept below the Bloom threshold)
 const REFLECTION       = 0.45;  // strength of the aurora / logo reflections
+
+// Electric runs
+const MAX_BOLTS   = 3;           // at most this many at once
+const MAX_POINTS  = 8;           // corners per path (start + up to 7 turns)
+const RUN_SECONDS = [1.0, 2.0];  // how long the head takes to run the path
+const GAP_SECONDS = [0.4, 2.4];  // pause before a slot sends its next bolt
+const NEAR_FAR    = [9, 26];     // where bolts start: ground distance ahead of the eye
 
 const vertexShader = /* glsl */ `
     varying vec2 vUv;
@@ -64,6 +78,14 @@ const fragmentShader = /* glsl */ `
     uniform float uFlow;
     uniform vec2  uMouse;        // cursor, screen uv 0..1
 
+    // electric runs (see Bolts in the component)
+    #define MAX_BOLTS ${MAX_BOLTS}
+    #define MAX_POINTS ${MAX_POINTS}
+    uniform vec2 uBoltPts[MAX_BOLTS * MAX_POINTS];  // path corners, grid units
+    uniform vec4 uBoltInfo[MAX_BOLTS];  // x: corners, y: head (along path), z: tail length, w: path length
+    uniform vec4 uBoltFx[MAX_BOLTS];    // x: start flash, y: end flash, z: head flicker, w: alive
+    uniform vec2 uBoltHead[MAX_BOLTS];  // where the head is, grid units
+
     const vec3 BASE    = vec3(0.010, 0.010, 0.010);  // black floor
     // grid lines in the logo's marble teal (same hue the marble shader
     // derives from its tint #1a4e4d): mid tone, every 6th line the bright tone
@@ -78,6 +100,54 @@ const fragmentShader = /* glsl */ `
     float noise1(float x) {
         float i = floor(x), f = fract(x);
         return mix(hash(i), hash(i + 1.0), f * f * (3.0 - 2.0 * f));
+    }
+
+    // Electric runs. g: grid position of this pixel; fw: grid units per pixel.
+    // Distances are measured in pixels so the bolt stays thin at any depth.
+    vec3 bolts(vec2 g, vec2 fw) {
+        vec3 acc = vec3(0.0);
+        for (int b = 0; b < MAX_BOLTS; b++) {
+            vec4 info = uBoltInfo[b];
+            vec4 fx = uBoltFx[b];
+            if (fx.w < 0.5) continue;
+
+            // nearest point of the path, and how far along the path it is
+            float best = 1e9, bestS = 0.0, s0 = 0.0;
+            for (int i = 0; i < MAX_POINTS - 1; i++) {
+                if (float(i) >= info.x - 1.0) break;
+                vec2 a = uBoltPts[b * MAX_POINTS + i];
+                vec2 c = uBoltPts[b * MAX_POINTS + i + 1];
+                vec2 ab = c - a;
+                float L = max(length(ab), 1e-4);
+                float h = clamp(dot(g - a, ab) / (L * L), 0.0, 1.0);
+                float dp = length((g - a - ab * h) / fw);
+                if (dp < best) { best = dp; bestS = s0 + h * L; }
+                s0 += L;
+            }
+
+            // lit between the head and the end of its tail
+            float behind = info.y - bestS;
+            float lit = step(0.0, behind) * (1.0 - smoothstep(0.0, info.z, behind));
+            lit *= lit;
+            float core = exp(-best * best / 0.9);          // ~1 px bright core
+            float glow = exp(-best / 2.2);                 // tight glow around it
+            acc += (vec3(0.80, 1.00, 0.98) * core * 1.25 + LINE_HI * glow * 0.22) * lit;
+
+            // the head: a flickering spark (only while it is still on the path)
+            float onPath = step(info.y, info.w);
+            float dh = length((g - uBoltHead[b]) / fw);
+            acc += vec3(0.90, 1.00, 1.00) * exp(-dh * dh / 7.0) * 1.3 * fx.z * onPath;
+
+            // a small flash where it starts and where it ends
+            float ds = length((g - uBoltPts[b * MAX_POINTS]) / fw);
+            int last = int(info.x) - 1;
+            vec2 endP = uBoltPts[b * MAX_POINTS];
+            for (int i = 1; i < MAX_POINTS; i++) { if (i == last) endP = uBoltPts[b * MAX_POINTS + i]; }
+            float de = length((g - endP) / fw);
+            acc += LINE_HI * exp(-ds * ds / 60.0) * 0.9 * fx.x;
+            acc += LINE_HI * exp(-de * de / 60.0) * 0.9 * fx.y;
+        }
+        return acc;
     }
 
     // thin anti-aliased line at every integer of v; w = width in pixels
@@ -152,6 +222,9 @@ const fragmentShader = /* glsl */ `
         float haze = exp(-dist * 0.045);
         col = mix(BASE * 0.6, col, haze);
 
+        // electric runs, dimming with distance like the lines
+        col += bolts(g, max(fwidth(g), vec2(1e-5))) * mix(0.35, 1.0, haze) * min(crowdX, crowdZ) * uLine * 1.6;
+
         // ── soft blurred reflections of the aurora ──────────────────────
         // vertical streaks of colour (reflections stretch toward the viewer),
         // brightest right under the horizon, fading toward the camera
@@ -187,6 +260,62 @@ const fragmentShader = /* glsl */ `
     }
 `;
 
+const rand = ([a, b]) => a + Math.random() * (b - a);
+const randInt = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+
+// A new path: start on a grid intersection somewhere on the visible floor,
+// then run 3-7 straight stretches of 1-3 cells, turning at intersections
+// (alternating sideways / along), staying roughly on screen.
+function spawnBolt(s, t, drift, eyeZ, halfW) {
+    const gyOf = (dist) => (eyeZ - dist + drift) / CELL_DEPTH;   // grid row at a ground distance
+    const dist = rand(NEAR_FAR);
+    const gx0 = Math.round(rand([-1, 1]) * dist * halfW * 0.7 / CELL_WIDTH);
+    const gy0 = Math.round(gyOf(dist));
+    const gyNear = gyOf(NEAR_FAR[0] - 2), gyFar = gyOf(NEAR_FAR[1] + 6);   // near has the larger row
+
+    s.n = randInt(4, MAX_POINTS);
+    s.pts[0].set(gx0, gy0);
+    let sideways = Math.random() < 0.5;
+    let total = 0;
+    for (let i = 1; i < s.n; i++) {
+        const prev = s.pts[i - 1];
+        let step = randInt(1, 3) * (Math.random() < 0.5 ? -1 : 1);
+        if (sideways) {
+            const depth = eyeZ + drift - prev.y * CELL_DEPTH;            // ground distance of this row
+            const limit = Math.max(1, Math.floor(depth * halfW * 0.85 / CELL_WIDTH));
+            if (Math.abs(prev.x + step) > limit) step = -step;
+            s.pts[i].set(prev.x + step, prev.y);
+        } else {
+            if (prev.y + step > gyNear || prev.y + step < gyFar) step = -step;
+            s.pts[i].set(prev.x, prev.y + step);
+        }
+        total += Math.abs(step);
+        s.lens[i] = total;
+        sideways = !sideways;
+    }
+    s.total = total;
+    const runFor = rand(RUN_SECONDS);
+    s.speed = total / runFor;
+    s.tail = Math.min(total * 0.5, 3.5);
+    s.born = t;
+    s.reachedAt = -1;
+    s.alive = true;
+}
+
+// The point `d` along a bolt's path (grid units) -> out
+function pointAlong(s, d, out) {
+    for (let i = 1; i < s.n; i++) {
+        if (d <= s.lens[i] || i === s.n - 1) {
+            const segStart = s.lens[i - 1] || 0;
+            const segLen = Math.max(s.lens[i] - segStart, 1e-6);
+            const k = Math.min(Math.max((d - segStart) / segLen, 0), 1);
+            out.copy(s.pts[i - 1]).lerp(s.pts[i], k);
+            return out;
+        }
+    }
+    return out.copy(s.pts[0]);
+}
+
 export default function GridFloor({ scrollRef = null, rotationRef = null }) {
     const meshRef = useRef();
     const { camera, scene, size } = useThree();
@@ -216,7 +345,19 @@ export default function GridFloor({ scrollRef = null, rotationRef = null }) {
         uPress:   { value: 0 },
         uFlow:    { value: 0 },
         uMouse:   { value: new THREE.Vector2(0.5, 0.5) },
+        uBoltPts:  { value: Array.from({ length: MAX_BOLTS * MAX_POINTS }, () => new THREE.Vector2()) },
+        uBoltInfo: { value: Array.from({ length: MAX_BOLTS }, () => new THREE.Vector4()) },
+        uBoltFx:   { value: Array.from({ length: MAX_BOLTS }, () => new THREE.Vector4()) },
+        uBoltHead: { value: Array.from({ length: MAX_BOLTS }, () => new THREE.Vector2()) },
     }), []);
+    // One slot per possible bolt; each starts after its own random wait
+    const slots = useMemo(() => Array.from({ length: MAX_BOLTS }, (_, i) => ({
+        alive: false,
+        nextAt: 0.6 + i * 0.9 + Math.random() * 1.5,
+        pts: Array.from({ length: MAX_POINTS }, () => new THREE.Vector2()),
+        lens: new Float32Array(MAX_POINTS),
+        n: 0, total: 0, born: 0, speed: 1, tail: 1, reachedAt: -1,
+    })), []);
     const _m4 = useMemo(() => new THREE.Matrix4(), []);
     const _mouseUv = useMemo(() => new THREE.Vector2(), []);
 
@@ -259,6 +400,37 @@ export default function GridFloor({ scrollRef = null, rotationRef = null }) {
         uniforms.uFlow.value  = holdState.flow;
         uniforms.uMouse.value.lerp(_mouseUv.set(state.pointer.x * 0.5 + 0.5, state.pointer.y * 0.5 + 0.5), 0.35);
         uniforms.uOpacity.value = landing;
+
+        // ── electric runs ────────────────────────────────────────────────
+        const t = state.clock.elapsedTime;
+        const drift = t * 0.35 + holdState.flow * 9.0;     // same as the shader's grid drift
+        const halfW = camera.aspect * Math.tan(fov / 2);   // ground half-width per unit of distance
+        for (let b = 0; b < MAX_BOLTS; b++) {
+            const s = slots[b];
+            if (!s.alive && t >= s.nextAt) spawnBolt(s, t, drift, uniforms.uPivot.value, halfW);
+            const info = uniforms.uBoltInfo.value[b];
+            const fx = uniforms.uBoltFx.value[b];
+            if (!s.alive) { fx.w = 0; continue; }
+
+            const head = (t - s.born) * s.speed;
+            if (head >= s.total && s.reachedAt < 0) s.reachedAt = t;
+            // done once the tail has run off the end and the end flash has faded
+            if (head - s.tail > s.total && t - s.reachedAt > 0.4) {
+                s.alive = false;
+                s.nextAt = t + rand(GAP_SECONDS);
+                fx.w = 0;
+                continue;
+            }
+            for (let i = 0; i < s.n; i++) uniforms.uBoltPts.value[b * MAX_POINTS + i].copy(s.pts[i]);
+            info.set(s.n, head, s.tail, s.total);
+            fx.set(
+                Math.exp(-(t - s.born) * 7),                               // start flash
+                s.reachedAt < 0 ? 0 : Math.exp(-(t - s.reachedAt) * 7),    // end flash
+                0.65 + 0.35 * Math.random(),                               // head flicker
+                1
+            );
+            pointAlong(s, Math.min(head, s.total), uniforms.uBoltHead.value[b]);
+        }
     });
 
     return (

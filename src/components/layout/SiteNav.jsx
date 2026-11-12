@@ -15,35 +15,37 @@
  */
 
 import React, { useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import { CAPABILITY_STEPS, MAX_PROGRESS } from "@/lib/scrollPhases";
 import ScrambleText from "./ScrambleText";
 import styles from "./siteNav.module.css";
+import { introDelay } from "@/lib/introState";
 
+// The same links on every page (Home and the inner pages)
 const LINKS = [
-  { label: "Home",         href: "#top",          scrollTo: "top" },
-  { label: "Capabilities", href: "#capabilities", scrollTo: "capabilities" },
-  { label: "Contact",      href: "mailto:contact@aurainfotech.ca" },
+  { label: "Services", href: "/services" },
+  { label: "Work",     href: "/work" },
+  { label: "About",    href: "/about" },
+  { label: "Contact",  href: "/contact" },
 ];
 
-// Matches SceneText's INTRO_DELAY so the nav arrives with the headline
+// Home: matches SceneText's INTRO_DELAY so the nav arrives with the headline.
+// Inner pages: the nav is there straight away.
 const REVEAL_DELAY = 7000;
 
-function handleScrollLink(e, link, after) {
-  if (!link.scrollTo) { after?.(); return; }
-  e.preventDefault();
-  // "capabilities": the section's intro stop (scroll progress -> pixels)
-  const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-  const top = link.scrollTo === "top" ? 0
-    : link.scrollTo === "capabilities" ? (CAPABILITY_STEPS[0] / MAX_PROGRESS) * maxScroll
-    : document.documentElement.scrollHeight;
-  window.scrollTo({ top, behavior: "smooth" });
-  after?.();
-}
+const isActive = (pathname, href) =>
+  pathname === href || (pathname ?? "").startsWith(`${href}/`);
 
-export default function SiteNav() {
+/**
+ * variant "home": Home's nav, revealed after the intro (Home shows its own logo).
+ * variant "inner": every other page, visible at once, with the logo top-left.
+ */
+export default function SiteNav({ variant = "home" }) {
+  const inner = variant === "inner";
+  const pathname = usePathname();
   const reduce = useReducedMotion();
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState(inner);
   const [open, setOpen]       = useState(false);
 
   const desktopRefs = useRef([]);
@@ -52,11 +54,15 @@ export default function SiteNav() {
   const toggleRef   = useRef(null);
   const firstLinkRef = useRef(null);
 
-  // Reveal with the landing headline
+  // Home: reveal with the landing headline
   useEffect(() => {
-    const t = setTimeout(() => setVisible(true), REVEAL_DELAY);
+    if (inner) return;
+    const t = setTimeout(() => setVisible(true), introDelay(REVEAL_DELAY));
     return () => clearTimeout(t);
-  }, []);
+  }, [inner]);
+
+  // Close the mobile menu after navigating
+  useEffect(() => { setOpen(false); }, [pathname]);
 
   // Decode every link once on reveal, staggered left to right
   useEffect(() => {
@@ -96,6 +102,13 @@ export default function SiteNav() {
 
   return (
     <>
+      {inner && (
+        <Link href="/" className={styles.brand} aria-label="Aura Infotech home">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt="" width="90" height="90" />
+        </Link>
+      )}
+
       <motion.nav
         className={styles.nav}
         aria-label="Primary"
@@ -111,19 +124,18 @@ export default function SiteNav() {
         <ul className={styles.list}>
           {LINKS.map((link, i) => (
             <li key={link.label}>
-              <a
+              <Link
                 href={link.href}
                 className={styles.link}
-                aria-label={link.label}
+                aria-current={isActive(pathname, link.href) ? "page" : undefined}
                 onPointerEnter={() => desktopRefs.current[i]?.scramble()}
                 onFocus={() => desktopRefs.current[i]?.scramble()}
-                onClick={(e) => handleScrollLink(e, link)}
               >
                 <ScrambleText
                   ref={(el) => { desktopRefs.current[i] = el; }}
                   text={link.label}
                 />
-              </a>
+              </Link>
             </li>
           ))}
         </ul>
@@ -157,21 +169,21 @@ export default function SiteNav() {
             <ul className={styles.overlayList}>
               {LINKS.map((link, i) => (
                 <li key={link.label}>
-                  <a
+                  <Link
                     ref={i === 0 ? firstLinkRef : undefined}
                     href={link.href}
                     className={styles.overlayLink}
-                    aria-label={link.label}
+                    aria-current={isActive(pathname, link.href) ? "page" : undefined}
                     onPointerEnter={() => mobileRefs.current[i]?.scramble()}
                     onFocus={() => mobileRefs.current[i]?.scramble()}
-                    onClick={(e) => handleScrollLink(e, link, close)}
+                    onClick={close}
                   >
                     <ScrambleText
                       ref={(el) => { mobileRefs.current[i] = el; }}
                       text={link.label}
                       duration={800}
                     />
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>

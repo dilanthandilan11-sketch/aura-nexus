@@ -150,3 +150,22 @@ nav, .nav-text, .navigation {
   transform-style: preserve-3d;
   perspective: 500px;
 }
+/* Home, reached from another page of the site (no loading intro): the space
+   comes back out of the dim the previous page left behind, then the headline
+   and the marquee play their entry (see src/lib/introState.js) */
+main.home-return::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 150;            /* over the scene and headline, under the navbar (300) */
+  pointer-events: none;
+  background: radial-gradient(120% 90% at 50% 50%, rgba(2,2,4,0.55) 0%, rgba(2,2,4,0.95) 100%);
+  animation: home-return 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+}
+@keyframes home-return {
+  from { opacity: 1; }
+  to   { opacity: 0; visibility: hidden; }
+}
+@media (prefers-reduced-motion: reduce) {
+  main.home-return::after { animation-duration: 0.6s; }
+}
